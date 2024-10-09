@@ -1,7 +1,7 @@
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
 import { bytecode20, bytecode223 } from './converter.json';
-import { ethers } from 'ethers';
+import { keccak256, encodeAbiParameters, getAddress } from 'viem';
 
 import schemaJson from './tokenlist.schema.json';
 const ajv = new Ajv({ allErrors: true, verbose: true });
@@ -81,11 +81,12 @@ export function predictWrapperAddress(tokenAddress: string, isERC20: boolean = t
     const create2Inputs = [
         '0xff',
         CONVERTER_ADDRESS,
-        ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(['address'],[tokenAddress])),
-        ethers.keccak256(_bytecode),
+        keccak256(encodeAbiParameters([
+            { name: 'x', type: 'address' }],[tokenAddress  as `0x${string}`])),
+        keccak256(_bytecode as `0x${string}`),
     ];
     const sanitizedInputs = `0x${create2Inputs.map((i) => i.slice(2)).join('')}`;
-    return ethers.getAddress(`0x${ethers.keccak256(sanitizedInputs).slice(-40)}`);
+    return getAddress(`0x${keccak256(sanitizedInputs as `0x${string}`).slice(-40)}`);
 }
 
 function formatItem(token: uniToken, address223: string): dexToken {
