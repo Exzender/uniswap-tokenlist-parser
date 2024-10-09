@@ -1,12 +1,16 @@
 {
-  "name": "${PROJECT_NAME}",
+  "name": "tokenlist-parser",
   "version": "1.0.0",
   "description": "",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc"
   },
-  "dependencies": {},
+  "dependencies": {
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
+    "ethers": "^6.13.3"
+  },
   "devDependencies": {
     "typescript": "^5.5.3"
   },

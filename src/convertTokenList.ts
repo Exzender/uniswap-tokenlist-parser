@@ -28,11 +28,6 @@ type UniData = {
     logoURI?: string
 };
 
-const ARBITRUM_LIST = 'https://bridge.arbitrum.io/token-list-42161.json';
-const UNI_EXAMPLE_LIST =  'https://raw.githubusercontent.com/Uniswap/token-lists/refs/heads/main/test/schema/bigexample.tokenlist.json';
-const ONE_INCH_LIST = 'https://wispy-bird-88a7.uniswap.workers.dev/?url=http://tokens.1inch.eth.link';
-const COIN_GECKO_LIST = 'https://tokens.coingecko.com/uniswap/all.json';
-
 const CONVERTER_ADDRESS = '0x044845FB22B4258d83a6c24b2fB061AFEba7e5b9';
 
 type dexToken = {
@@ -75,8 +70,14 @@ async function validate(data: any) {
     }
 }
 
-function calcAddress(tokenAddress: string, erc20source: boolean = true) {
-    const _bytecode = erc20source ? bytecode223 : bytecode20;
+/**
+ * Calculates wrapped token address. Off-chain version of "predictWrapperAddress" function in TokenConverter contract.
+ * @param tokenAddress Source token address
+ * @param isERC20 Is source token type = ERC20.
+ * @returns Wrapped token address.
+ */
+export function predictWrapperAddress(tokenAddress: string, isERC20: boolean = true): string {
+    const _bytecode = isERC20 ? bytecode223 : bytecode20;
     const create2Inputs = [
         '0xff',
         CONVERTER_ADDRESS,
@@ -112,7 +113,12 @@ async function getList(url: string): Promise<UniData> {
     }
 }
 
-async function convertList(url: string): Promise<DexData> {
+/**
+ * Downloads token list in Uniswap format and converts it into Dex223 token list format.
+ * @param url URL of token list
+ * @returns Promise with formatted Dex223 token list.
+ */
+export async function convertList(url: string): Promise<DexData> {
     const data = await getList(url);
     const list = data.tokens;
 
@@ -128,22 +134,14 @@ async function convertList(url: string): Promise<DexData> {
         version: data.version
     };
 
-    console.time('parseList');
+    // console.time('parseList');
     for (let token of list) {
-        const erc223address = calcAddress(token.address, true);
+        const erc223address = predictWrapperAddress(token.address, true);
         const newItem = formatItem(token, erc223address);
         convertedList.tokens.push(newItem);
     }
-    console.timeEnd('parseList');
+    // console.timeEnd('parseList');
     
     return convertedList;
 }
 
-(async () => {
-    console.time('fullProcess');
-    const resList = await convertList(COIN_GECKO_LIST);
-    console.timeEnd('fullProcess');
-    
-    // console.dir(resList);
-    console.log(`List length: ${resList.tokens.length}`);
-})();
